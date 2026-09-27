@@ -262,7 +262,7 @@ class TestWeightedSummary:
         db_mod.DB_PATH = db
         try:
             from paper1_nms.weighted_summary import weighted_method_means
-            df = weighted_method_means(overlap_pct=0.0, use_moran_correction=False)
+            df = weighted_method_means(overlap_pct=0.0)
             assert not df.empty
             assert len(df) == 31, f"Expected 31 methods, got {len(df)}"
             assert df["nms_method"].nunique() == 31

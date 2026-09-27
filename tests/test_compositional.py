@@ -79,8 +79,7 @@ class TestCmultRepl:
 
         Regression: the multiplicative rescale (1 - nz·0.5/n) goes negative when
         the zero pseudo-mass exceeds the total (here 3·0.5/1 = 1.5 > 1), which used
-        to yield e.g. [-0.5, 0.5, 0.5, 0.5] and feed NaN into ilr()'s log. These
-        rows appear constantly in rarefaction at small k. Falls back to the
+        to yield e.g. [-0.5, 0.5, 0.5, 0.5] and feed NaN into ilr()'s log. Falls back to the
         Dirichlet(0.5) posterior mean (x_j + 0.5)/(n + 0.5·D).
         """
         counts = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], dtype=float)

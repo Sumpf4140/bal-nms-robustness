@@ -2,7 +2,7 @@
 
 The `timing` collected during `run_all` is distorted by --workers CPU contention
 (frequency scaling + memory-bandwidth pressure, unevenly across methods), so it
-must not be used for the reported time-save (P1) or cost (P3). This module times
+must not be used for reported time savings. This module times
 each method in a single process over a representative batch and stores CPU + wall
 time per repeat. For a pristine run also pin BLAS/OpenMP threads to 1 in the
 environment before launching (the methods are mostly single-threaded anyway):

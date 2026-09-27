@@ -234,40 +234,6 @@ def krippendorff_alpha_per_coordinate(ilr_panel: np.ndarray) -> np.ndarray:
     ])
 
 
-def chosen_method(overlap_pct: float | None = None) -> str:
-    """The NMS method with the smallest median Aitchison distance to consensus
-    (from P1's method_deviation table). The shared definition used by P2 and P3
-    as a tractable tile-level stand-in for the (sparse) per-tile consensus.
-
-    The `nms_method` alphabetical tiebreak in ORDER BY is load-bearing, not
-    cosmetic: many methods are near-identical and some are EXACTLY tied — e.g. at
-    overlap 0, grid_n1 ≡ per_tile, so nn_dist_grid_n1 and nn_dist_per_tile share an
-    identical median distance. Without the tiebreak DuckDB returns the tied rows in
-    an unstable order, so chosen_method returns a *different* method from call to
-    call. Every P2/P3 step calls this independently, so a non-deterministic result
-    makes them silently disagree (region_counts aggregated under one method, the
-    regional Friedman queried under another → empty result; coffee-ring mixing
-    methods across labels). A stable key makes the whole pipeline self-consistent.
-
-    Falls back to 'none' if method_deviation is missing/empty.
-    """
-    from core.db import connect  # local import keeps this module DB-free at import
-
-    where = "WHERE overlap_pct = ?" if overlap_pct is not None else ""
-    params = [float(overlap_pct)] if overlap_pct is not None else []
-    try:
-        with connect(read_only=True) as con:
-            df = con.execute(
-                f"SELECT nms_method, median(aitchison_distance) AS d "
-                f"FROM method_deviation {where} GROUP BY nms_method "
-                f"ORDER BY d, nms_method",
-                params,
-            ).fetchdf()
-    except Exception:
-        return "none"
-    return str(df.iloc[0]["nms_method"]) if not df.empty else "none"
-
-
 def krippendorff_alpha_bootstrap_ci(
     ilr_panel: np.ndarray,
     n_boot: int = N_BOOTSTRAP,

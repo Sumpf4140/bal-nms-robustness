@@ -116,69 +116,7 @@ def bootstrap_equivalence(
     }
 
 
-# ── Bland-Altman ─────────────────────────────────────────────────────────────
-
-def bland_altman_stats(
-    method1: np.ndarray,
-    method2: np.ndarray,
-) -> dict:
-    """Bland-Altman agreement statistics.
-
-    Returns: mean_diff, std_diff, loa_lower, loa_upper (95% limits of agreement).
-    """
-    diff = np.asarray(method1, dtype=float) - np.asarray(method2, dtype=float)
-    mean_diff = float(diff.mean()) if diff.size else float("nan")
-    # ddof=1 std is undefined for <2 points; return nan without the numpy warning.
-    std_diff = float(diff.std(ddof=1)) if diff.size >= 2 else float("nan")
-    return {
-        "mean_diff": mean_diff,
-        "std_diff": std_diff,
-        "loa_lower": mean_diff - 1.96 * std_diff,
-        "loa_upper": mean_diff + 1.96 * std_diff,
-    }
-
-
-# ── Inverse-variance weighting ────────────────────────────────────────────────
-
-def inverse_variance_weights(
-    n_per_slide: np.ndarray,
-    moran_i_per_slide: np.ndarray | None = None,
-    cluster_size_per_slide: np.ndarray | None = None,
-) -> np.ndarray:
-    """Per-slide inverse-variance weights for the weighted ILR mean.
-
-    Without Moran's I:   w_s = N_s              (multinomial precision ∝ cells)
-    With Moran's I:      w_s = N_s / DEFF_s,    DEFF_s = 1 + (m̄_s − 1)·ρ_s
-
-    where DEFF_s is the **cluster-sampling design effect** (Kish): tiles are the
-    clusters, cells the elements, m̄_s = N_s / T_s is the mean cluster size
-    (cells per occupied tile), and ρ_s ∈ [0, 1] is the intra-cluster correlation
-    proxied by the per-slide Moran's I (negative values clipped to 0).
-
-    The cluster size, **not** the raw cell count, multiplies ρ_s. Using N_s
-    there (the previous behaviour) made DEFF ≈ N_s·ρ_s, so w_s ≈ 1/ρ_s collapsed
-    to a near-constant across slides and the weighting did nothing. With the
-    correct m̄_s, N_eff = N_s / DEFF_s ≈ T_s / ρ_s scales with the number of
-    *independent* spatial units — the intended behaviour. If
-    cluster_size_per_slide is None, m̄_s falls back to N_s (documented legacy
-    behaviour; pass cluster sizes for the spatially-honest weight).
-
-    Input:  n_per_slide             — (S,) cell counts per slide.
-            moran_i_per_slide       — (S,) Moran's I values or None.
-            cluster_size_per_slide  — (S,) mean cells-per-tile, or None.
-    Output: (S,) positive weights (not normalised to sum to 1).
-    """
-    n = np.asarray(n_per_slide, dtype=float)
-    if moran_i_per_slide is None:
-        return n.copy()
-
-    rho = np.clip(np.asarray(moran_i_per_slide, dtype=float), 0.0, 1.0)
-    m_bar = (np.asarray(cluster_size_per_slide, dtype=float)
-             if cluster_size_per_slide is not None else n)
-    denom = 1.0 + (m_bar - 1.0) * rho
-    denom = np.where(denom > 0, denom, 1.0)  # guard against m̄=1, rho=1 edge
-    return n / denom
-
+# ── Weighted mean ─────────────────────────────────────────────────────────────
 
 def weighted_ilr_mean(
     ilr_per_slide: np.ndarray,

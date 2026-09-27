@@ -115,12 +115,11 @@ def cmd_outliers() -> None:
 @app.command("weighted-summary")
 def cmd_weighted(
     overlap: float = typer.Option(0.0, "--overlap", help="Overlap fraction to summarise"),
-    no_moran: bool = typer.Option(False, "--no-moran", help="Disable Moran's I correction"),
 ) -> None:
-    """Inverse-variance-weighted slide-level ILR mean per method."""
+    """Count-weighted slide-level ILR mean per method."""
     from paper1_nms.weighted_summary import weighted_method_means
-    with console.status("[cyan]Computing inverse-variance weighted means…[/cyan]"):
-        df = weighted_method_means(overlap, use_moran_correction=not no_moran)
+    with console.status("[cyan]Computing count-weighted means…[/cyan]"):
+        df = weighted_method_means(overlap)
     out = P1_REPORTS / "weighted_method_means.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)
@@ -170,7 +169,7 @@ def cmd_timing(
 ) -> None:
     """Controlled single-process timing of all 31 variants → timing_clean.
 
-    Use this — not the parallel-run `timing` table — for reported time-save/cost.
+    Use this — not the parallel-run `timing` table — for reported time savings.
     For a pristine measurement set OMP_NUM_THREADS=1 etc. before launching.
     """
     from paper1_nms.timing import run_timing, timing_summary
@@ -271,7 +270,7 @@ def cmd_all(
         ("blocks", lambda: cmd_blocks(overlap=None)),
         ("consensus", lambda: cmd_consensus(overlap=None)),
         ("outliers", cmd_outliers),
-        ("weighted-summary", lambda: cmd_weighted(overlap=0.0, no_moran=False)),
+        ("weighted-summary", lambda: cmd_weighted(overlap=0.0)),
         ("baseline", lambda: cmd_baseline(overlap=0.0)),
         ("method-similarity", lambda: cmd_method_similarity(overlap=0.0)),
         ("plots", lambda: cmd_plots(overlap=0.0)),

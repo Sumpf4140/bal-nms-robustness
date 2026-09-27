@@ -101,31 +101,3 @@ def filter_by_min_cells(
         after, before, 100 * frac,
     )
     return kept
-
-
-def pivot_block_counts_to_matrix(
-    block_counts: pd.DataFrame,
-) -> tuple[pd.DataFrame, np.ndarray, list[str]]:
-    """Pivot block_counts to a composition matrix.
-
-    Returns:
-        meta_df  — one row per (slide_id, overlap_pct, nms_method, block_size, block_x, block_y)
-        counts   — (N_blocks, 4) count matrix in LABELS order
-        labels   — column names (= LABELS)
-    """
-    # Ensure all labels are present for every block (fill missing with 0)
-    key_cols = ["slide_id", "overlap_pct", "nms_method", "block_size", "block_x", "block_y"]
-    pivot = (
-        block_counts.pivot_table(
-            index=key_cols,
-            columns="label",
-            values="count",
-            aggfunc="sum",
-            fill_value=0,
-        )
-        .reindex(columns=LABELS, fill_value=0)
-        .reset_index()
-    )
-    meta_df = pivot[key_cols + ["n_block_total"]].copy() if "n_block_total" in pivot.columns else pivot[key_cols].copy()
-    counts = pivot[LABELS].to_numpy(dtype=float)
-    return pivot, counts, LABELS

@@ -64,7 +64,7 @@ def cmult_repl(counts: np.ndarray) -> np.ndarray:
             # np.log with NaN. Fall back to the exact estimator the multiplicative
             # form approximates: the Dirichlet(0.5) posterior mean
             # p_j = (x_j + 0.5)/(n + 0.5·D), strictly positive for any non-negative
-            # counts. Only fires for near-empty rows (e.g. rarefaction at k=1);
+            # counts. Only fires for near-empty rows (e.g. a unit with one detection);
             # every well-sampled row keeps the original multiplicative result.
             result[i] = (row + 0.5) / (n + 0.5 * D)
             continue

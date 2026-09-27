@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS timing (
 );
 -- Controlled single-process timing on a representative batch (paper1_nms/timing.py).
 -- Separate from `timing`, which is collected during the parallel run and is
--- distorted by --workers CPU contention. Use this for any reported time-save/cost.
+-- distorted by --workers CPU contention. Use this for any reported time savings.
 CREATE TABLE IF NOT EXISTS timing_clean (
     slide_id VARCHAR, overlap_pct DOUBLE, nms_method VARCHAR, repeat INT,
     n_detections INT, elapsed_cpu DOUBLE, elapsed_wall DOUBLE,

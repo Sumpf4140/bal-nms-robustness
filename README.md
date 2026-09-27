@@ -2,7 +2,8 @@
 
 Code, analysis scripts and intermediate results for the study *"Does non-maximum
 suppression change the cell differential? A robustness and equivalence analysis of
-detector post-processing in quantitative cytology"* (manuscript under review).
+detector post-processing in quantitative cytology"* (manuscript under review; see
+[Citation](#citation)).
 
 The study applies 31 post-processing variants (No-NMS, 24 deduplication variants,
 6 edge-crop variants) to the output of one fixed cell detector on 76 bronchoalveolar
@@ -123,10 +124,7 @@ controlled single-process timing (`p1 timing`).
 | `revision/I_class_retention.csv` | class-specific retention relative to No-NMS | Discussion |
 | `revision/J_friedman_25methods.csv` | Friedman statistics across the 25 variants | Results |
 
-Weights in `weighted_method_means.csv` are the per-slide detection counts
-(w = N). `paper1_nms/weighted_summary.py` can additionally apply a spatial
-design-effect correction when a table of per-slide Moran's I is present in the
-database; that correction was not used for the reported values.
+Weights in `weighted_method_means.csv` are the per-slide detection counts (w = N).
 
 ## Tests
 
@@ -145,3 +143,25 @@ Whole-slide images and raw detections are not included. Slide identifiers in
 `results/` are pseudonyms (S01–S76) assigned in the sort order of the original
 identifiers, which keeps the fixed-seed bootstrap resampling identical to the
 published analysis.
+
+## Citation
+
+If you use this code or the results, please cite the paper:
+
+> [AUTHORS]. Does non-maximum suppression change the cell differential? A robustness
+> and equivalence analysis of detector post-processing in quantitative cytology.
+> *[JOURNAL]*. [YEAR];[VOLUME]([ISSUE]):[PAGES]. doi:[DOI](https://doi.org/[DOI])
+
+```bibtex
+@article{[CITATION_KEY],
+  author  = {[AUTHORS]},
+  title   = {Does non-maximum suppression change the cell differential? A robustness and
+             equivalence analysis of detector post-processing in quantitative cytology},
+  journal = {[JOURNAL]},
+  year    = {[YEAR]},
+  volume  = {[VOLUME]},
+  number  = {[ISSUE]},
+  pages   = {[PAGES]},
+  doi     = {[DOI]}
+}
+```
