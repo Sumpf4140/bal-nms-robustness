@@ -16,11 +16,11 @@ import typer
 from core.db import init_db, get_status
 from core.loader import load_all
 
-import paper1_nms.cli as p1_cli
+import nms.cli as nms_cli
 
 app = typer.Typer(help="BAL cytospin NMS robustness analysis CLI")
 
-app.add_typer(p1_cli.app, name="p1")
+app.add_typer(nms_cli.app, name="nms")
 
 
 @app.command("init-db")

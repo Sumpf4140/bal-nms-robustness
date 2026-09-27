@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS raw_detections (
 CREATE INDEX IF NOT EXISTS idx_raw_slide_overlap
     ON raw_detections(slide_id, overlap_pct);
 
--- Paper 1: NMS output
+-- NMS output
 CREATE TABLE IF NOT EXISTS cell_counts (
     slide_id VARCHAR, overlap_pct DOUBLE, nms_method VARCHAR,
     label VARCHAR, count INT, rel_count DOUBLE,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS timing (
     elapsed_cpu DOUBLE, n_input INT, n_output INT,
     PRIMARY KEY (slide_id, overlap_pct, nms_method)
 );
--- Controlled single-process timing on a representative batch (paper1_nms/timing.py).
+-- Controlled single-process timing on a representative batch (nms/timing.py).
 -- Separate from `timing`, which is collected during the parallel run and is
 -- distorted by --workers CPU contention. Use this for any reported time savings.
 CREATE TABLE IF NOT EXISTS timing_clean (
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS checkpoint (
     PRIMARY KEY (slide_id, overlap_pct, nms_method)
 );
 
--- Paper 1: Block-level aggregates and consensus
+-- Block-level aggregates and consensus
 CREATE TABLE IF NOT EXISTS block_counts (
     slide_id VARCHAR, overlap_pct DOUBLE, nms_method VARCHAR,
     block_size INT,

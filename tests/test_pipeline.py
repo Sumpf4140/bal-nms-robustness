@@ -1,4 +1,4 @@
-"""Integration tests for Paper 1 pipeline.
+"""Integration tests for the analysis pipeline.
 
 These tests use synthetic in-memory data and a temporary DuckDB to verify
 the end-to-end flow: NMS run → block aggregation → consensus → deviations.
@@ -151,7 +151,7 @@ class TestBlockAggregation:
         populate_db(db, n_tiles_x=4, n_tiles_y=4)
         import core.db as db_mod
         monkeypatch.setattr(db_mod, "DB_PATH", db)
-        import paper1_nms.consensus_analysis as ca
+        import nms.consensus_analysis as ca
         monkeypatch.setattr(ca, "connect", lambda **kw: db_mod.connect(**kw, db_path=db))
 
         # Direct call using internal functions
@@ -244,7 +244,7 @@ class TestWeightedSummary:
         orig = db_mod.DB_PATH
         db_mod.DB_PATH = db
         try:
-            from paper1_nms.weighted_summary import per_slide_method_ilrs
+            from nms.weighted_summary import per_slide_method_ilrs
             df = per_slide_method_ilrs(overlap_pct=0.0)
             assert not df.empty
             assert "nms_method" in df.columns
@@ -261,7 +261,7 @@ class TestWeightedSummary:
         orig = db_mod.DB_PATH
         db_mod.DB_PATH = db
         try:
-            from paper1_nms.weighted_summary import weighted_method_means
+            from nms.weighted_summary import weighted_method_means
             df = weighted_method_means(overlap_pct=0.0)
             assert not df.empty
             assert len(df) == 31, f"Expected 31 methods, got {len(df)}"
@@ -339,7 +339,7 @@ class TestOutlierDetection:
         orig = db_mod.DB_PATH
         db_mod.DB_PATH = db
         try:
-            from paper1_nms.outlier_detection import methods_in_upper_tail_fraction
+            from nms.outlier_detection import methods_in_upper_tail_fraction
             result = methods_in_upper_tail_fraction(block_size=bs, overlap_pct=0.0)
             assert not result.empty
             assert "nms_method" in result.columns

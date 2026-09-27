@@ -31,7 +31,7 @@ def friedman_test(values_by_method: dict[str, np.ndarray]) -> dict:
 
     # On tied/degenerate input scipy's ties-correction denominator hits 0, raising a
     # benign numpy divide/invalid RuntimeWarning before returning nan. Silence it here
-    # (it floods the console during `p1 all`, which runs Friedman per ILR coordinate);
+    # (it floods the console during `nms all`, which runs Friedman per ILR coordinate);
     # the nan is handled just below.
     with np.errstate(divide="ignore", invalid="ignore"):
         statistic, p_value = scipy_stats.friedmanchisquare(*data)

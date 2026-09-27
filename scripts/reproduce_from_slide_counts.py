@@ -25,7 +25,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from config import ALR_REF_LABEL, EQUIV_MARGIN_ALR, LABELS, OVERLAP_PCTS, P1_REPORTS
+from config import ALR_REF_LABEL, EQUIV_MARGIN_ALR, LABELS, OVERLAP_PCTS, RESULTS_DIR
 from core.compositional import cmult_repl, ilr, ilr_inv
 from core.stats import bootstrap_equivalence, friedman_test, weighted_ilr_mean
 
@@ -88,12 +88,12 @@ def table_s1_proportions(counts: pd.DataFrame) -> np.ndarray:
 
 
 def main() -> None:
-    counts = pd.read_csv(P1_REPORTS / "slide_counts.csv")
+    counts = pd.read_csv(RESULTS_DIR / "slide_counts.csv")
     print(f"loaded {len(counts):,} rows, {counts.slide_id.nunique()} slides, "
           f"{counts.nms_method.nunique()} variants")
 
     eq = equivalence(counts)
-    pub = pd.read_csv(P1_REPORTS / "equivalence_all_overlaps.csv")
+    pub = pd.read_csv(RESULTS_DIR / "equivalence_all_overlaps.csv")
     m = eq.merge(pub, on=["nms_method", "label", "overlap_pct"], suffixes=("", "_pub"))
     assert len(m) == len(pub) == 810, (len(m), len(pub))
     dev = max((m[c] - m[f"{c}_pub"]).abs().max() for c in ("median", "ci_low", "ci_high"))
@@ -106,7 +106,7 @@ def main() -> None:
               f"(90% CI {r.ci_low:+.3f} to {r.ci_high:+.3f})  equivalent: {r.equivalent}")
 
     fr = friedman(counts)
-    pub_fr = pd.read_csv(P1_REPORTS / "revision" / "J_friedman_25methods.csv")
+    pub_fr = pd.read_csv(RESULTS_DIR / "revision" / "J_friedman_25methods.csv")
     dev_fr = (fr["statistic"] - pub_fr["statistic"]).abs().max()
     print(f"friedman: chi2({int(fr['df'].iloc[0])}) = "
           f"{fr['statistic'].min():.1f}-{fr['statistic'].max():.1f}, "

@@ -1,4 +1,4 @@
-"""Method-level Mahalanobis outlier identification for Paper 1.
+"""Method-level Mahalanobis outlier identification.
 
 A method is flagged as a statistical outlier when it lands in the upper tail of
 the within-block Mahalanobis-distance distribution **more often than chance**.

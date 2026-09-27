@@ -4,7 +4,7 @@ Single-writer rule: workers read DB read-only; main process writes all results
 inside one transaction batch after workers return.
 
 Usage:
-    from paper1_nms.process import run_all
+    from nms.process import run_all
     run_all(n_workers=4)
 """
 from __future__ import annotations
@@ -287,7 +287,7 @@ def run_all(
         return
 
     console.print(Panel.fit(
-        f"[bold cyan]NMS Comparison Pipeline — Paper 1[/bold cyan]\n"
+        f"[bold cyan]NMS Comparison Pipeline[/bold cyan]\n"
         f"Remaining: [bold]{remaining:,}[/bold] method-runs   "
         f"done: {done_count:,}   total: {grand_total:,}\n"
         f"Pairs to process: {total_pairs:,}   Workers: {n_workers}   "

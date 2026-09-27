@@ -23,10 +23,10 @@ core/                  post-processing and statistics library
   compositional.py     zero replacement (CZM), ilr/alr, Aitchison distance
   consensus.py         geometric-median consensus, Krippendorff's alpha, Mahalanobis
   stats.py             bootstrap equivalence (TOST), Friedman, Holm, weights
-paper1_nms/            analysis pipeline (run, consensus, outliers, equivalence, timing)
+nms/                   analysis pipeline (run, consensus, outliers, equivalence, timing)
 scripts/
   reproduce_from_slide_counts.py   re-derive the slide-level results from results/ alone
-  reproduce_p1_analysis.py         block-level pipeline behind Tables 1-3, S4, S5
+  reproduce_analysis.py            block-level pipeline behind Tables 1-3, S4, S5
   revision_analyses.py             additional analyses requested in peer review
   export_slide_counts.py           writes results/slide_counts.csv from the database
 results/               intermediate outputs underlying the reported statistics
@@ -96,15 +96,15 @@ tile's origin on the slide.
 ```bash
 python main.py init-db
 python main.py load
-python main.py p1 run --workers 4          # all variants x overlaps -> cell/tile counts
-python scripts/reproduce_p1_analysis.py    # analysis scales, consensus, alpha, outliers, equivalence
+python main.py nms run --workers 4          # all variants x overlaps -> cell/tile counts
+python scripts/reproduce_analysis.py    # analysis scales, consensus, alpha, outliers, equivalence
 python scripts/revision_analyses.py        # additional analyses (results/revision/)
 ```
 
 The database location defaults to `~/.balc/results.duckdb` (override with
 `BALC_DB_PATH`). The full study produces a database of roughly 15 GB.
-`python main.py p1 --help` lists the individual pipeline stages, including the
-controlled single-process timing (`p1 timing`).
+`python main.py nms --help` lists the individual pipeline stages, including the
+controlled single-process timing (`nms timing`).
 
 ## Results
 

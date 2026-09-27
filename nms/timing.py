@@ -7,7 +7,7 @@ each method in a single process over a representative batch and stores CPU + wal
 time per repeat. For a pristine run also pin BLAS/OpenMP threads to 1 in the
 environment before launching (the methods are mostly single-threaded anyway):
 
-    OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 balc p1 timing
+    OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 balc nms timing
 """
 from __future__ import annotations
 

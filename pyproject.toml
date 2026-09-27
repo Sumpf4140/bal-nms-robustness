@@ -25,7 +25,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["core*", "paper1_nms*"]
+include = ["core*", "nms*"]
 
 [project.scripts]
 balc = "main:app"

@@ -1,6 +1,6 @@
-"""Paper 1 figures.
+"""Figures.
 
-All figures saved to P1_REPORTS as PDF.
+All figures saved to RESULTS_DIR as PDF.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from config import P1_REPORTS, LABELS, OVERLAP_PCTS, BLOCK_SIZES
+from config import RESULTS_DIR, LABELS, OVERLAP_PCTS, BLOCK_SIZES
 from core.blocks import ALL_BLOCK_SIZES
 from core.compositional import ilr_inv
 from core.plots_common import save_fig, alpha_ci_band, add_reference_lines, LABEL_COLOURS
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 _BLOCK_LABEL = {0: "full", 1: "1×1", 2: "2×2", 3: "3×3", 4: "4×4", 5: "5×5"}
 
 
-def fig1_scale_dependence(curve_df: pd.DataFrame, out_dir: Path = P1_REPORTS) -> None:
+def fig1_scale_dependence(curve_df: pd.DataFrame, out_dir: Path = RESULTS_DIR) -> None:
     """α vs block size with 95% CI band, faceted by overlap.  Headline figure."""
     overlaps = sorted(curve_df["overlap_pct"].unique())
     n_cols = min(3, len(overlaps))
@@ -59,7 +59,7 @@ def fig1_scale_dependence(curve_df: pd.DataFrame, out_dir: Path = P1_REPORTS) ->
 
 def fig2_method_consensus_scatter(
     weighted_means_df: pd.DataFrame,
-    out_dir: Path = P1_REPORTS,
+    out_dir: Path = RESULTS_DIR,
 ) -> None:
     """Pairwise ILR scatter of weighted method means; outliers highlighted."""
     if weighted_means_df.empty:
@@ -100,7 +100,7 @@ def fig2_method_consensus_scatter(
 
 def fig3_outlier_heatmap(
     outlier_df: pd.DataFrame,
-    out_dir: Path = P1_REPORTS,
+    out_dir: Path = RESULTS_DIR,
 ) -> None:
     """Methods × (block_size × overlap) heatmap of upper-tail fraction."""
     if outlier_df.empty:
@@ -122,7 +122,7 @@ def fig3_outlier_heatmap(
     logger.info("Saved fig3_outlier_heatmap.pdf")
 
 
-def fig4_aitchison_distance_boxplot(out_dir: Path = P1_REPORTS) -> None:
+def fig4_aitchison_distance_boxplot(out_dir: Path = RESULTS_DIR) -> None:
     """Per-method Aitchison-to-consensus distance distribution."""
     from core.db import connect
     with connect(read_only=True) as con:
@@ -147,7 +147,7 @@ def fig4_aitchison_distance_boxplot(out_dir: Path = P1_REPORTS) -> None:
     logger.info("Saved fig4_aitchison_distance_boxplot.pdf")
 
 
-def fig5_timing_boxplot(out_dir: Path = P1_REPORTS) -> None:
+def fig5_timing_boxplot(out_dir: Path = RESULTS_DIR) -> None:
     """CPU time per method, log scale."""
     from core.db import connect
     with connect(read_only=True) as con:
@@ -173,7 +173,7 @@ def make_all_plots(
     curve_df: pd.DataFrame,
     weighted_means_df: pd.DataFrame,
     outlier_df: pd.DataFrame,
-    out_dir: Path = P1_REPORTS,
+    out_dir: Path = RESULTS_DIR,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     fig1_scale_dependence(curve_df, out_dir)

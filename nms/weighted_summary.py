@@ -1,4 +1,4 @@
-"""Count-weighted slide-level summary for Paper 1.
+"""Count-weighted slide-level summary.
 
 Per variant, the mean ilr composition across slides weighted by each slide's
 number of retained detections (w_s = N_s; multinomial precision is

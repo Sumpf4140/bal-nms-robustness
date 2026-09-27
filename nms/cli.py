@@ -1,4 +1,4 @@
-"""Paper 1 CLI commands (registered as `balc p1 ...`)."""
+"""CLI commands (registered as `balc nms ...`)."""
 from __future__ import annotations
 
 import logging
@@ -6,12 +6,12 @@ import time
 
 import typer
 
-from config import P1_REPORTS, OVERLAP_PCTS, EQUIV_MARGIN_ALR
+from config import RESULTS_DIR, OVERLAP_PCTS, EQUIV_MARGIN_ALR
 from core.blocks import ALL_BLOCK_SIZES
 from core.progress import console, pipeline_progress
 
 logger = logging.getLogger(__name__)
-app = typer.Typer(help="Paper 1: NMS benchmark via inter-method consensus")
+app = typer.Typer(help="NMS benchmark via inter-method consensus")
 
 
 @app.command("run")
@@ -20,7 +20,7 @@ def cmd_run(
     slide: str = typer.Option(None, "--slide", help="Run only this slide_id"),
 ) -> None:
     """Resumable 76x9x31 NMS run -> cell_counts, tile_counts, timing."""
-    from paper1_nms.process import run_all
+    from nms.process import run_all
     run_all(n_workers=workers, slide_filter=slide)
 
 
@@ -29,7 +29,7 @@ def cmd_blocks(
     overlap: float = typer.Option(None, "--overlap", help="Run for one overlap value only"),
 ) -> None:
     """Aggregate tile_counts -> block_counts for all block sizes."""
-    from paper1_nms.consensus_analysis import build_block_counts
+    from nms.consensus_analysis import build_block_counts
     total = 1 if overlap is not None else len(OVERLAP_PCTS)
     with pipeline_progress() as progress:
         task = progress.add_task("[cyan]Block counts (per overlap)[/cyan]", total=total)
@@ -42,7 +42,7 @@ def cmd_consensus(
     overlap: float = typer.Option(None, "--overlap", help="Compute for one overlap only"),
 ) -> None:
     """Compute geometric-median consensus, method deviations, and Krippendorff alpha."""
-    from paper1_nms.consensus_analysis import (
+    from nms.consensus_analysis import (
         compute_consensus_per_block,
         compute_method_deviations,
         scale_dependence_curve,
@@ -65,16 +65,16 @@ def cmd_consensus(
     with pipeline_progress() as progress:
         task = progress.add_task("[cyan]Scale-dependence α[/cyan]", total=n_curve)
         curve = scale_dependence_curve(tick=lambda: progress.advance(task))
-    out = P1_REPORTS / "scale_dependence_curve.csv"
+    out = RESULTS_DIR / "scale_dependence_curve.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     curve.to_csv(out, index=False)
     console.print(f"[green]✓[/green] Saved {out}")
 
-    from paper1_nms.zero_sensitivity import zero_sensitivity_curve
+    from nms.zero_sensitivity import zero_sensitivity_curve
     with pipeline_progress() as progress:
         task = progress.add_task("[cyan]Zero-replacement sensitivity α[/cyan]", total=n_curve)
         zs = zero_sensitivity_curve(tick=lambda: progress.advance(task))
-    zs_out = P1_REPORTS / "zero_sensitivity_curve.csv"
+    zs_out = RESULTS_DIR / "zero_sensitivity_curve.csv"
     zs.to_csv(zs_out, index=False)
     if not zs.empty and zs["gap"].notna().any():
         worst = zs.loc[zs["gap"].abs().idxmax()]
@@ -91,14 +91,14 @@ def cmd_consensus(
 @app.command("outliers")
 def cmd_outliers() -> None:
     """Identify statistical outlier methods via Mahalanobis distance."""
-    from paper1_nms.outlier_detection import outlier_summary
+    from nms.outlier_detection import outlier_summary
     with pipeline_progress() as progress:
         task = progress.add_task(
             "[cyan]Outlier scan (per setting)[/cyan]",
             total=len(ALL_BLOCK_SIZES) * len(OVERLAP_PCTS),
         )
         df = outlier_summary(tick=lambda: progress.advance(task))
-    out = P1_REPORTS / "outlier_summary.csv"
+    out = RESULTS_DIR / "outlier_summary.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)
     console.print(f"[green]✓[/green] Saved {out}")
@@ -117,10 +117,10 @@ def cmd_weighted(
     overlap: float = typer.Option(0.0, "--overlap", help="Overlap fraction to summarise"),
 ) -> None:
     """Count-weighted slide-level ILR mean per method."""
-    from paper1_nms.weighted_summary import weighted_method_means
+    from nms.weighted_summary import weighted_method_means
     with console.status("[cyan]Computing count-weighted means…[/cyan]"):
         df = weighted_method_means(overlap)
-    out = P1_REPORTS / "weighted_method_means.csv"
+    out = RESULTS_DIR / "weighted_method_means.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)
     console.print(f"[green]✓[/green] Saved {out}")
@@ -134,12 +134,12 @@ def cmd_baseline(
         help="A-priori standard-NMS reference for the focused no-NMS-equivalence verdict"),
 ) -> None:
     """Explicit no-NMS-vs-NMS thesis: Friedman across methods + equivalence vs 'none'."""
-    from paper1_nms.baseline_comparison import baseline_summary
+    from nms.baseline_comparison import baseline_summary
     with console.status("[cyan]Baseline: Friedman + bootstrap equivalence vs 'none'…[/cyan]"):
         res = baseline_summary(overlap, reference_method=reference)
-    P1_REPORTS.mkdir(parents=True, exist_ok=True)
-    res["friedman"].to_csv(P1_REPORTS / "baseline_friedman.csv", index=False)
-    res["equivalence"].to_csv(P1_REPORTS / "baseline_equivalence.csv", index=False)
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    res["friedman"].to_csv(RESULTS_DIR / "baseline_friedman.csv", index=False)
+    res["equivalence"].to_csv(RESULTS_DIR / "baseline_equivalence.csv", index=False)
 
     # Headline: focused, a-priori no-NMS vs standard reference (consistency, not accuracy).
     if res["reference_equivalent"]:
@@ -172,14 +172,14 @@ def cmd_timing(
     Use this — not the parallel-run `timing` table — for reported time savings.
     For a pristine measurement set OMP_NUM_THREADS=1 etc. before launching.
     """
-    from paper1_nms.timing import run_timing, timing_summary
+    from nms.timing import run_timing, timing_summary
     n = run_timing(n_slides=n_slides, repeats=repeats)
     if not n:
         typer.echo("No timing rows written (load data first).")
         return
     summary = timing_summary()
-    P1_REPORTS.mkdir(parents=True, exist_ok=True)
-    summary.to_csv(P1_REPORTS / "timing_clean_summary.csv", index=False)
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(RESULTS_DIR / "timing_clean_summary.csv", index=False)
     typer.echo(summary.to_string())
 
 
@@ -188,34 +188,34 @@ def cmd_method_similarity(
     overlap: float = typer.Option(0.0, "--overlap"),
 ) -> None:
     """Method-distance matrix + dendrogram (context for Krippendorff's α)."""
-    from paper1_nms.method_similarity import method_distance_matrix, plot_dendrogram
+    from nms.method_similarity import method_distance_matrix, plot_dendrogram
     with console.status("[cyan]Computing method-distance matrix…[/cyan]"):
         dm = method_distance_matrix(overlap)
     if dm.empty:
-        console.print("[red]No cell_counts — run p1 run first.[/red]")
+        console.print("[red]No cell_counts — run `nms run` first.[/red]")
         raise typer.Exit(1)
-    (P1_REPORTS / "plots").mkdir(parents=True, exist_ok=True)
-    dm.to_csv(P1_REPORTS / "method_distance_matrix.csv")
-    plot_dendrogram(dm, P1_REPORTS / "plots" / "method_dendrogram.png")
-    console.print(f"[green]✓[/green] Saved method-distance matrix + dendrogram → {P1_REPORTS}")
+    (RESULTS_DIR / "plots").mkdir(parents=True, exist_ok=True)
+    dm.to_csv(RESULTS_DIR / "method_distance_matrix.csv")
+    plot_dendrogram(dm, RESULTS_DIR / "plots" / "method_dendrogram.png")
+    console.print(f"[green]✓[/green] Saved method-distance matrix + dendrogram → {RESULTS_DIR}")
 
 
 @app.command("plots")
 def cmd_plots(
     overlap: float = typer.Option(0.0, "--overlap"),
 ) -> None:
-    """Generate all Paper 1 figures."""
-    from paper1_nms.consensus_analysis import scale_dependence_curve
-    from paper1_nms.outlier_detection import outlier_summary
-    from paper1_nms.weighted_summary import weighted_method_means
-    from paper1_nms.plots import make_all_plots
+    """Generate all figures."""
+    from nms.consensus_analysis import scale_dependence_curve
+    from nms.outlier_detection import outlier_summary
+    from nms.weighted_summary import weighted_method_means
+    from nms.plots import make_all_plots
 
-    with console.status("[cyan]Generating Paper 1 figures…[/cyan]"):
+    with console.status("[cyan]Generating figures…[/cyan]"):
         curve = scale_dependence_curve()
         wmeans = weighted_method_means(overlap)
         out_df = outlier_summary()
         make_all_plots(curve, wmeans, out_df)
-    console.print("[green]✓[/green] All Paper 1 plots saved.")
+    console.print("[green]✓[/green] All plots saved.")
 
 
 @app.command("benchmark")
@@ -257,7 +257,7 @@ def cmd_benchmark(
 def cmd_all(
     workers: int = typer.Option(1, "--workers"),
 ) -> None:
-    """Run full Paper 1 pipeline: run -> blocks -> consensus -> outliers -> weighted-summary -> plots."""
+    """Run full pipeline: run -> blocks -> consensus -> outliers -> weighted-summary -> plots."""
     from rich.table import Table
 
     # Typer's @app.command returns the undecorated function, so each command is a
@@ -289,7 +289,7 @@ def cmd_all(
         results.append((name, status, time.perf_counter() - t0))
 
     total = time.perf_counter() - t_pipeline
-    table = Table(title="Paper 1 pipeline — summary", header_style="bold")
+    table = Table(title="Pipeline — summary", header_style="bold")
     table.add_column("Step")
     table.add_column("Status")
     table.add_column("Elapsed", justify="right")

@@ -11,10 +11,10 @@ scikit-learn==1.9.0          # tests/test_nms.py — DBSCAN cross-check of nn-cl
 scikit-posthocs==0.14.0      # core/stats.py — Nemenyi post-hoc
 statsmodels==0.14.6          # core/stats.py — Holm correction
 duckdb==1.5.3                # core/db.py — result store
-matplotlib==3.11.0           # paper1_nms/plots.py
+matplotlib==3.11.0           # nms/plots.py
 Pillow==12.2.0               # core/slide_image.py — image dimensions
 rich==15.0.0                 # core/progress.py — progress display
-typer==0.26.7                # main.py, paper1_nms/cli.py — `balc` CLI
+typer==0.26.7                # main.py, nms/cli.py — `balc` CLI
 
 # Optional: reference implementation used only by one validation test
 # (tests/test_consensus.py; skipped if absent).

@@ -35,7 +35,7 @@ class TestFriedmanTest:
 
     def test_tied_input_silent_and_p_one(self):
         """Tied input must NOT leak scipy's divide RuntimeWarning to the console
-        (it floods `p1 all`); the handled nan becomes p=1.0."""
+        (it floods `nms all`); the handled nan becomes p=1.0."""
         import warnings
         data = np.ones(30)
         with warnings.catch_warnings():

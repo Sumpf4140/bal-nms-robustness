@@ -1,4 +1,4 @@
-"""Paper 1: explicit no-NMS-vs-NMS hypothesis test.
+"""Explicit no-NMS-vs-NMS hypothesis test.
 
 Restores the project's original thesis — *"NMS is unnecessary for the relative
 differential, and is a waste of resources"* — as a direct, baseline-anchored

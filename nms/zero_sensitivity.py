@@ -1,4 +1,4 @@
-"""Paper 1: zero-replacement sensitivity for the inter-method α.
+"""Zero-replacement sensitivity for the inter-method α.
 
 The headline metric (Krippendorff's α on ILR compositions) is computed after
 Bayesian-multiplicative zero replacement, which imputes a zero count as the
@@ -41,7 +41,7 @@ from core.consensus import (
     krippendorff_alpha_aitchison,
     krippendorff_alpha_per_coordinate,
 )
-from paper1_nms.consensus_analysis import _blocks_to_ilr_panel, filter_blocks
+from nms.consensus_analysis import _blocks_to_ilr_panel, filter_blocks
 
 logger = logging.getLogger(__name__)
 

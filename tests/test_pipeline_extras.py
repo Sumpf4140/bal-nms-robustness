@@ -50,7 +50,7 @@ def _seed_raw(db, slide="r1", overlaps=(0.0, 0.025), n=4):
 
 class TestTiming:
     def test_time_methods_pure(self):
-        from paper1_nms.timing import time_methods
+        from nms.timing import time_methods
         df = make_detection_df(n=60)
         out = time_methods(df, ["none", "iou_grid_n1", "nn_cluster_global"],
                            repeats=2, warmup=True)
@@ -64,7 +64,7 @@ class TestTiming:
         _seed_raw(db)
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
-        from paper1_nms.timing import run_timing, timing_summary
+        from nms.timing import run_timing, timing_summary
         n = run_timing(n_slides=1, repeats=2, warmup=False)
         assert n == 1 * 2 * 31 * 2          # slides × overlaps × methods × repeats
         summary = timing_summary()
@@ -78,7 +78,7 @@ class TestMethodSimilarity:
         _seed_cellcounts(db)  # all methods identical per slide
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
-        from paper1_nms.method_similarity import method_distance_matrix
+        from nms.method_similarity import method_distance_matrix
         dm = method_distance_matrix(0.0)
         assert set(dm.index) == set(_METHODS)
         assert np.nanmax(dm.to_numpy()) < 1e-9
@@ -88,7 +88,7 @@ class TestMethodSimilarity:
         _seed_cellcounts(db, shift_method="iou_grid_n1", shift=0.4)
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
-        from paper1_nms.method_similarity import method_distance_matrix
+        from nms.method_similarity import method_distance_matrix
         dm = method_distance_matrix(0.0)
         assert dm.loc["none", "iou_grid_n1"] > dm.loc["none", "nn_dist_global"]
 
@@ -99,7 +99,7 @@ class TestMultiplicity:
         _seed_cellcounts(db, shift_method="iou_grid_n1", shift=0.3)
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
-        from paper1_nms.baseline_comparison import friedman_across_methods
+        from nms.baseline_comparison import friedman_across_methods
         fr = friedman_across_methods(0.0)
         assert "p_holm" in fr.columns
         assert (fr["p_holm"] >= fr["p_value"] - 1e-12).all()
@@ -122,7 +122,7 @@ def _deviation_df(n_blocks, methods, outlier=None, seed=0):
 
 class TestOutlierCalibration:
     def test_flags_true_outlier(self):
-        from paper1_nms.outlier_detection import compute_upper_tail_flags
+        from nms.outlier_detection import compute_upper_tail_flags
         df = _deviation_df(150, _METHODS, outlier="none", seed=1)
         res = compute_upper_tail_flags(df, n_perm=500)
         flagged = set(res.loc[res["flagged_outlier"], "nms_method"])
@@ -137,7 +137,7 @@ class TestOutlierCalibration:
         passes the permutation test and would fail the old anti-conservative
         > 5% / binomial rule (whose FWER is far above α).
         """
-        from paper1_nms.outlier_detection import compute_upper_tail_flags
+        from nms.outlier_detection import compute_upper_tail_flags
         n_rep, any_flag = 30, 0
         for r in range(n_rep):
             df = _deviation_df(120, _METHODS, outlier=None, seed=100 + r)
@@ -172,7 +172,7 @@ class TestBlockFilter:
         self._seed_blocks(db)
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
-        from paper1_nms.consensus_analysis import filter_blocks, _blocks_to_ilr_panel
+        from nms.consensus_analysis import filter_blocks, _blocks_to_ilr_panel
         fb = filter_blocks(0, 0.0)
         # Only the dense position survives, regardless of method aggressiveness.
         positions = set(map(tuple, fb[["block_x", "block_y"]].drop_duplicates().to_numpy()))
@@ -197,7 +197,7 @@ class TestZeroScaleSensitivity:
             "nms_method", "label", "count"])
 
     def test_common_scale_removes_zero_balance_gap(self):
-        from paper1_nms.consensus_analysis import _blocks_to_ilr_panel
+        from nms.consensus_analysis import _blocks_to_ilr_panel
         bdf = self._block_df()
         _, panel_asis, methods = _blocks_to_ilr_panel(bdf)
         _, panel_cs, _ = _blocks_to_ilr_panel(bdf, common_scale=True)
@@ -213,7 +213,7 @@ class TestZeroScaleSensitivity:
 
     def test_alpha_zero_sensitivity_keys_on_empty(self):
         """Graceful structure when no blocks pass the filter."""
-        from paper1_nms.zero_sensitivity import alpha_zero_sensitivity
+        from nms.zero_sensitivity import alpha_zero_sensitivity
         db = None
         import core.db as dbm
         # Point at an initialised but empty DB so filter_blocks returns empty.

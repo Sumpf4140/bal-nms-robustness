@@ -1,4 +1,4 @@
-"""Paper 1: structure of the method space.
+"""Structure of the method space.
 
 Krippendorff's α treats the methods as independent raters, but many are
 near-identical transforms of the same detections (e.g. iou_grid_n1…n5). This

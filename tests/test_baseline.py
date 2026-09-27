@@ -1,4 +1,4 @@
-"""Tests for the explicit no-NMS-vs-NMS baseline thesis (paper1_nms.baseline_comparison)."""
+"""Tests for the explicit no-NMS-vs-NMS baseline thesis (nms.baseline_comparison)."""
 from __future__ import annotations
 
 import numpy as np
@@ -38,7 +38,7 @@ class TestBaselineEquivalence:
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
 
-        from paper1_nms.baseline_comparison import equivalence_vs_none, friedman_across_methods
+        from nms.baseline_comparison import equivalence_vs_none, friedman_across_methods
         eq = equivalence_vs_none(0.0, margin=0.2)
         assert not eq.empty
         assert eq["equivalent"].all(), "identical methods must all be equivalent to none"
@@ -53,7 +53,7 @@ class TestBaselineEquivalence:
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
 
-        from paper1_nms.baseline_comparison import equivalence_vs_none, friedman_across_methods
+        from nms.baseline_comparison import equivalence_vs_none, friedman_across_methods
         eq = equivalence_vs_none(0.0, margin=0.2)
         # Makrophage moved for iou_per_tile → that method×label is NOT equivalent
         row = eq[(eq["nms_method"] == "iou_grid_n1") & (eq["label"] == "Makrophage")]
@@ -73,7 +73,7 @@ class TestReferenceVerdict:
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
 
-        from paper1_nms.baseline_comparison import baseline_summary
+        from nms.baseline_comparison import baseline_summary
         res = baseline_summary(0.0, reference_method="iou_grid_n1")
         assert res["reference_equivalent"] is True
         assert not res["reference_equivalence"].empty
@@ -87,7 +87,7 @@ class TestReferenceVerdict:
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
 
-        from paper1_nms.baseline_comparison import baseline_summary
+        from nms.baseline_comparison import baseline_summary
         res_iou = baseline_summary(0.0, reference_method="iou_grid_n1")
         assert res_iou["reference_equivalent"] is False
         bad = res_iou["reference_equivalence"]
@@ -102,7 +102,7 @@ class TestReferenceVerdict:
         import core.db as dbm
         monkeypatch.setattr(dbm, "DB_PATH", db)
 
-        from paper1_nms.baseline_comparison import baseline_summary
+        from nms.baseline_comparison import baseline_summary
         res = baseline_summary(0.0, reference_method="does_not_exist")
         assert res["reference_equivalent"] is False
         assert res["reference_equivalence"].empty

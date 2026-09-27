@@ -2,7 +2,7 @@
 
 Inspired by the 2dNMS pipeline's look: a coloured Panel header, then a Progress
 with spinner · description · bar · M/N · % · elapsed · ETA. Keeping it in one
-place means `balc load` and `balc p1 run` (and anything else) look identical.
+place means `balc load` and `balc nms run` (and anything else) look identical.
 
 Off a real terminal (tests, piped output) rich degrades gracefully to occasional
 plain updates, so this is safe to use unconditionally.

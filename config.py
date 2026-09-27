@@ -15,7 +15,7 @@ DB_PATH = (
     if os.environ.get("BALC_DB_PATH")
     else Path.home() / ".balc" / "results.duckdb"
 )
-P1_REPORTS   = PROJECT_ROOT / "results"
+RESULTS_DIR  = PROJECT_ROOT / "results"
 
 SLIDE_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".tif", ".tiff")
 

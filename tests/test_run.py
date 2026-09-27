@@ -56,7 +56,7 @@ class TestRunEngine:
         import core.db as db_mod
         monkeypatch.setattr(db_mod, "DB_PATH", db)
 
-        from paper1_nms.process import run_all
+        from nms.process import run_all
         run_all(n_workers=1, slide_filter="s1")
 
         with connect(read_only=True, db_path=db) as con:
@@ -75,7 +75,7 @@ class TestRunEngine:
 
     def test_parallel_matches_serial(self, tmp_path, monkeypatch):
         import core.db as db_mod
-        from paper1_nms.process import run_all
+        from nms.process import run_all
 
         dbs = tmp_path / "serial.duckdb"
         _seed(dbs, "s1", [0.0, 0.025])

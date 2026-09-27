@@ -223,7 +223,7 @@ def krippendorff_alpha_per_coordinate(ilr_panel: np.ndarray) -> np.ndarray:
     variance, the per-coordinate breakdown localises *which* balance drives
     (dis)agreement — e.g. isolating the often-zero Eosinophil balance, whose
     apparent disagreement is sensitive to the count-scale of the zero
-    replacement (see paper1_nms.zero_sensitivity).
+    replacement (see nms.zero_sensitivity).
 
     ilr_panel: (M, N, D-1). Returns (D-1,) array of per-coordinate α.
     """

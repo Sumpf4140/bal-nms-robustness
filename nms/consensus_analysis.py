@@ -74,7 +74,7 @@ def build_block_counts(
             tick()
 
     if total == 0:
-        logger.warning("tile_counts is empty — run p1 run first")
+        logger.warning("tile_counts is empty — run `nms run` first")
     else:
         logger.info("Wrote %d block_count rows total", total)
 
@@ -117,7 +117,7 @@ def filter_blocks(
 # ── Consensus computation ─────────────────────────────────────────────────────
 
 # Common total for the count-scale-invariant zero treatment (see
-# paper1_nms.zero_sensitivity). The value is immaterial: rescaling every
+# nms.zero_sensitivity). The value is immaterial: rescaling every
 # method's block counts to the same total leaves all non-zero log-ratios
 # unchanged and only pins the imputed-zero pseudo-proportion (0.5/total) so it
 # no longer depends on a method's absolute detection count.

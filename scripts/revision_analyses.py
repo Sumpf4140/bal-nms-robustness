@@ -1,6 +1,6 @@
 """Additional analyses requested during peer review (first revision).
 
-Computes the numbers that are not produced by scripts/reproduce_p1_analysis.py.
+Computes the numbers that are not produced by scripts/reproduce_analysis.py.
 Read-only against the results DB. Writes CSVs to results/revision/ and prints a
 summary. Labels refer to reviewer (R1/R2) comments; M = major comment.
 
@@ -28,12 +28,12 @@ from scipy import stats as sps
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from config import LABELS, ALR_REF_LABEL, OVERLAP_PCTS, N_BOOTSTRAP, RNG_SEED, P1_REPORTS
+from config import LABELS, ALR_REF_LABEL, OVERLAP_PCTS, N_BOOTSTRAP, RNG_SEED, RESULTS_DIR
 from core.db import connect
 from core.compositional import ilr
 from core.stats import bootstrap_equivalence, friedman_test
 
-OUT = P1_REPORTS / "revision"
+OUT = RESULTS_DIR / "revision"
 OUT.mkdir(parents=True, exist_ok=True)
 
 EN = {"Makrophage": "Mac", "Lymphozyt": "Lym",
@@ -105,7 +105,7 @@ def paired_diffs(alr_df: pd.DataFrame, method: str, ref: str, coord: str) -> np.
 
 # ── A: stricter margin from existing CIs ─────────────────────────────────────
 def analysis_A() -> None:
-    eq = pd.read_csv(P1_REPORTS / "equivalence_all_overlaps.csv")
+    eq = pd.read_csv(RESULTS_DIR / "equivalence_all_overlaps.csv")
     eq["label_en"] = eq["label"].map(EN)
     for m in (0.10, 0.15, 0.20):
         eq[f"equiv_{m:.2f}"] = (eq["ci_low"] > -m) & (eq["ci_high"] < m)
@@ -342,7 +342,7 @@ def analysis_C() -> None:
 
 # ── sanity: reproduce Table 1 numbers from the existing CSV ───────────────────
 def sanity() -> None:
-    eq = pd.read_csv(P1_REPORTS / "equivalence_all_overlaps.csv")
+    eq = pd.read_csv(RESULTS_DIR / "equivalence_all_overlaps.csv")
     r = eq[(eq.nms_method == "iou_grid_n1") & (eq.overlap_pct == 0.0)]
     for row in r.itertuples():
         log(f"sanity: iou_grid_n1 @0% {EN[row.label]}: {row.median:+.3f} "
