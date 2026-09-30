@@ -266,47 +266,68 @@ def analysis_D() -> None:
 
 # ── H: Table 3 quantities ─────────────────────────────────────────────────────
 def analysis_H() -> None:
+    """Table 3: upper-tail frequency and largest-deviation share per variant.
+
+    The upper-tail frequency uses exactly the rule of nms.outlier_detection
+    (pandas 95th percentile per unit, strictly greater than), so the summary
+    reproduces results/outlier_summary.csv. For the largest-deviation share,
+    units in which several variants share the maximum distance are split
+    equally among them, so the shares sum to one in every combination. Both
+    quantities are computed over all eligible units for every variant (no
+    conditioning on the outlier flag), and each of the 54 combinations is
+    weighted equally in the summary.
+    """
+    from nms.outlier_detection import _BLOCK_KEY, _OUTLIER_TAIL_Q
+
+    rows = []
+    n_units = n_tied = n_tied_none = max_k = 0
     with connect(read_only=True) as con:
-        # expected exceedance p0 per setting + true largest-deviation proportions
-        h = con.execute("""
-            WITH thr AS (
-                SELECT slide_id, overlap_pct, block_size, block_x, block_y,
-                       quantile_cont(mahalanobis_distance, 0.95) AS q95,
-                       arg_max(nms_method, mahalanobis_distance) AS largest_method,
-                       COUNT(*) AS n_methods
-                FROM method_deviation
-                GROUP BY 1,2,3,4,5
-            ),
-            exceed AS (
-                SELECT md.block_size, md.overlap_pct, md.nms_method,
-                       AVG(CASE WHEN md.mahalanobis_distance > t.q95 THEN 1 ELSE 0 END)
-                           AS frac_upper_tail
-                FROM method_deviation md
-                JOIN thr t USING (slide_id, overlap_pct, block_size, block_x, block_y)
-                GROUP BY 1,2,3
-            ),
-            largest AS (
-                SELECT block_size, overlap_pct, largest_method AS nms_method,
-                       COUNT(*)::DOUBLE / SUM(COUNT(*)) OVER
-                           (PARTITION BY block_size, overlap_pct) AS frac_largest
-                FROM thr GROUP BY 1,2,3
-            )
-            SELECT e.block_size, e.overlap_pct, e.nms_method,
-                   e.frac_upper_tail, COALESCE(l.frac_largest, 0) AS frac_largest
-            FROM exceed e LEFT JOIN largest l
-              USING (block_size, overlap_pct, nms_method)
-        """).fetchdf()
+        settings = con.execute("SELECT DISTINCT block_size, overlap_pct FROM method_deviation "
+                               "ORDER BY block_size, overlap_pct").fetchall()
+        for bs, ov in settings:
+            df = con.execute("SELECT * FROM method_deviation WHERE block_size=? AND overlap_pct=?",
+                             [bs, float(ov)]).fetchdf()
+            thr = (df.groupby(_BLOCK_KEY)["mahalanobis_distance"].quantile(_OUTLIER_TAIL_Q)
+                     .reset_index().rename(columns={"mahalanobis_distance": "threshold"}))
+            m = df.merge(thr, on=_BLOCK_KEY)
+            m["in_upper_tail"] = m["mahalanobis_distance"] > m["threshold"]
+            dmax = m.groupby(_BLOCK_KEY)["mahalanobis_distance"].transform("max")
+            m["is_max"] = m["mahalanobis_distance"] == dmax
+            k = m.groupby(_BLOCK_KEY)["is_max"].transform("sum")
+            m["largest_share"] = m["is_max"] / k
+            units = m.loc[m["is_max"]].assign(k=k[m["is_max"]]).drop_duplicates(_BLOCK_KEY)
+            tied_keys = m.loc[m["is_max"] & (k > 1)]
+            n_units += len(units)
+            n_tied += int((units["k"] > 1).sum())
+            n_tied_none += int(tied_keys.loc[tied_keys.nms_method == "none", _BLOCK_KEY]
+                               .drop_duplicates().shape[0])
+            max_k = max(max_k, int(k.max()))
+            per = m.groupby("nms_method").agg(frac_upper_tail=("in_upper_tail", "mean"),
+                                               largest=("largest_share", "sum"))
+            per["frac_largest"] = per.pop("largest") / len(units)
+            per = per.reset_index()
+            per["block_size"], per["overlap_pct"] = bs, ov
+            rows.append(per)
+    h = pd.concat(rows, ignore_index=True)[["block_size", "overlap_pct", "nms_method",
+                                             "frac_upper_tail", "frac_largest"]]
     h.to_csv(OUT / "H_table3_per_setting.csv", index=False)
-    summ = (h.groupby("nms_method")[["frac_upper_tail", "frac_largest"]]
-            .mean().sort_values("frac_upper_tail", ascending=False).reset_index())
+    summ = (h.groupby("nms_method")[["frac_upper_tail", "frac_largest"]].mean()
+             .sort_values("frac_upper_tail", ascending=False).reset_index())
     summ.to_csv(OUT / "H_table3_summary.csv", index=False)
     p0 = h.groupby(["block_size", "overlap_pct"])["frac_upper_tail"].sum().mean()
-    log(f"H: mean per-block #methods above q95 threshold = {p0:.3f} "
-        f"(expected exceedance per method = {p0/25:.4f})")
-    log("H: top rows (mean frac_upper_tail | mean frac_largest):")
+    log(f"H: {len(h.groupby(['block_size', 'overlap_pct']))} combinations, {n_units:,} units")
+    log(f"H: mean #variants above the 95th percentile per unit = {p0:.3f} "
+        f"(chance level per variant = {p0 / 25:.4f})")
+    log(f"H: units with a tie at the largest deviation: {n_tied:,} ({n_tied / n_units:.2%}), "
+        f"involving No-NMS: {n_tied_none}, max tied variants: {max_k}")
     for r in summ.head(6).itertuples():
-        log(f"H:   {r.nms_method}: {r.frac_upper_tail:.3f} | {r.frac_largest:.3f}")
-    log(f"H: sum of mean frac_largest over methods = {summ.frac_largest.sum():.3f}")
+        log(f"H:   {r.nms_method}: upper-tail {r.frac_upper_tail:.4f} | largest {r.frac_largest:.4f}")
+    log(f"H: largest-deviation shares sum to {summ.frac_largest.sum():.6f}")
+    pub = RESULTS_DIR / "outlier_summary.csv"
+    if pub.exists():
+        chk = summ.merge(pd.read_csv(pub)[["nms_method", "mean_frac_upper_tail"]], on="nms_method")
+        log(f"H: max |difference| to outlier_summary.csv = "
+            f"{(chk.frac_upper_tail - chk.mean_frac_upper_tail).abs().max():.2e}")
 
 
 # ── C: zero-count frequencies by scale x variant (eligible blocks) ────────────
