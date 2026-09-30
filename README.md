@@ -144,6 +144,10 @@ Whole-slide images and raw detections are not included. Slide identifiers in
 identifiers, which keeps the fixed-seed bootstrap resampling identical to the
 published analysis.
 
+## License
+
+This code is released under the GNU General Public License, version 3 or later (see [LICENSE](LICENSE)).
+
 ## Citation
 
 If you use this code or the results, please cite the paper:
