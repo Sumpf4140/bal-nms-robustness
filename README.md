@@ -121,6 +121,7 @@ controlled single-process timing (`nms timing`).
 | `revision/F_edgecrop_vs_iou.csv` | edge-crop versus matching IoU-only variant | Results (edge crop) |
 | `revision/G_slide_level_distribution.csv` | per-slide distribution of Δ | Results |
 | `revision/H_table3_*.csv` | upper-tail frequency and largest-deviation share | Table 3 |
+| `revision/H_no_nms_slide_level.csv` | slide-level sign test of the No-NMS outlier finding | Methods (outlier analysis) |
 | `revision/I_class_retention.csv` | class-specific retention relative to No-NMS | Discussion |
 | `revision/J_friedman_25methods.csv` | Friedman statistics across the 25 variants | Results |
 

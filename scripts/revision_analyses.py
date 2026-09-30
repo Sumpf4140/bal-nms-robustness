@@ -279,7 +279,7 @@ def analysis_H() -> None:
     """
     from nms.outlier_detection import _BLOCK_KEY, _OUTLIER_TAIL_Q
 
-    rows = []
+    rows, sign_rows = [], []
     n_units = n_tied = n_tied_none = max_k = 0
     with connect(read_only=True) as con:
         settings = con.execute("SELECT DISTINCT block_size, overlap_pct FROM method_deviation "
@@ -291,6 +291,14 @@ def analysis_H() -> None:
                      .reset_index().rename(columns={"mahalanobis_distance": "threshold"}))
             m = df.merge(thr, on=_BLOCK_KEY)
             m["in_upper_tail"] = m["mahalanobis_distance"] > m["threshold"]
+            # slide-level check that does not assume independent units within a slide
+            chance = m.groupby(_BLOCK_KEY)["in_upper_tail"].sum().mean() / m["nms_method"].nunique()
+            per_slide = m[m.nms_method == "none"].groupby("slide_id")["in_upper_tail"].mean()
+            k_above = int((per_slide > chance).sum())
+            sign_rows.append(dict(block_size=bs, overlap_pct=ov, chance=chance,
+                                  n_slides=len(per_slide), n_slides_above=k_above,
+                                  p_sign=sps.binomtest(k_above, len(per_slide), 0.5,
+                                                       alternative="greater").pvalue))
             dmax = m.groupby(_BLOCK_KEY)["mahalanobis_distance"].transform("max")
             m["is_max"] = m["mahalanobis_distance"] == dmax
             k = m.groupby(_BLOCK_KEY)["is_max"].transform("sum")
@@ -311,6 +319,11 @@ def analysis_H() -> None:
     h = pd.concat(rows, ignore_index=True)[["block_size", "overlap_pct", "nms_method",
                                              "frac_upper_tail", "frac_largest"]]
     h.to_csv(OUT / "H_table3_per_setting.csv", index=False)
+    sg = pd.DataFrame(sign_rows)
+    sg.to_csv(OUT / "H_no_nms_slide_level.csv", index=False)
+    log(f"H: No-NMS above chance in >= {sg.n_slides_above.min()} of {sg.n_slides.min()}-{sg.n_slides.max()} "
+        f"slides per combination; all slides in {(sg.n_slides_above == sg.n_slides).sum()} of {len(sg)}; "
+        f"largest sign-test p = {sg.p_sign.max():.1e}")
     summ = (h.groupby("nms_method")[["frac_upper_tail", "frac_largest"]].mean()
              .sort_values("frac_upper_tail", ascending=False).reset_index())
     summ.to_csv(OUT / "H_table3_summary.csv", index=False)
