@@ -193,19 +193,29 @@ def analysis_G() -> None:
 
 # ── F: edge-crop vs matching IoU-only variant ─────────────────────────────────
 def analysis_F() -> None:
+    """Edge removal alone: each edge-crop variant minus the IoU-only variant of the
+    same suppression scope (Delta = edge-crop - IoU-only), all scopes and overlaps."""
     rows = []
-    for ov in (0.0, 0.25):
+    for ov in OVERLAP_PCTS:
         alr_df = alr_table(slide_counts(ov))
-        for scope in ("grid_n1", "grid_n5", "global"):
+        for scope in SCOPES:
             for coord in [f"alr_{EN[l]}" for l in NON_REF]:
                 d = paired_diffs(alr_df, f"iou_edgecrop_{scope}", f"iou_{scope}", coord)
                 res = bootstrap_equivalence(d, 0.20)
                 rows.append(dict(scope=scope, overlap=ov, coord=coord, **res))
     f = pd.DataFrame(rows)
     f.to_csv(OUT / "F_edgecrop_vs_iou.csv", index=False)
-    for r in f[f.coord == "alr_Mac"].itertuples():
-        log(f"F: edgecrop-{r.scope} minus iou-{r.scope} Mac @ {r.overlap:.0%}: "
-            f"{r.median:+.3f} [{r.ci_low:+.3f}, {r.ci_high:+.3f}] equiv={r.equivalent}")
+    mac = f[f.coord == "alr_Mac"]
+    for ov in OVERLAP_PCTS:
+        s = mac[mac.overlap == ov]
+        cross = s[s.scope != "grid_n1"]
+        single = s[s.scope == "grid_n1"].iloc[0]
+        log(f"F: Mac @ {ov:5.1%}: single-tile {single['median']:+.3f} "
+            f"[{single.ci_low:+.3f}, {single.ci_high:+.3f}] | cross-tile {cross['median'].min():+.3f} to "
+            f"{cross['median'].max():+.3f}, equivalent {int(cross.equivalent.sum())}/5")
+    other = f[f.coord != "alr_Mac"]
+    log(f"F: Neu/Eos: max |median| = {other['median'].abs().max():.3f}, "
+        f"equivalent {int(other.equivalent.sum())}/{len(other)}")
 
 
 # ── I: class-specific retention ───────────────────────────────────────────────
