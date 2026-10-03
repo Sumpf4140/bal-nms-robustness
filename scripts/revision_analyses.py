@@ -237,6 +237,42 @@ def analysis_I() -> None:
             rows.append(r)
     i = pd.DataFrame(rows)
     i.to_csv(OUT / "I_class_retention.csv", index=False)
+
+    # Per-slide retention (the unit of the equivalence analysis). For each slide,
+    # the change in an alr relative to No-NMS equals log(retention of the cell
+    # type) - log(retention of lymphocytes); pooled totals weight slides by size.
+    per = []
+    for ov in OVERLAP_PCTS:
+        piv = slide_counts(ov).set_index(["slide_id", "nms_method"])
+        none = piv.xs("none", level="nms_method")
+        for m in piv.index.get_level_values("nms_method").unique():
+            if m == "none":
+                continue
+            ret = piv.xs(m, level="nms_method")[LABELS] / none[LABELS]
+            row = {"nms_method": m, "overlap": ov, "n_slides": len(ret)}
+            for lbl in LABELS:
+                row[f"median_ret_{EN[lbl]}"] = ret[lbl].median()
+            lr = np.log(ret["EosinophilerGranulozyt"]) - np.log(ret["Lymphozyt"])
+            row["median_log_ret_ratio_Eos_Lym"] = lr.median()
+            row["n_slides_Eos_retained_more"] = int((lr > 0).sum())
+            tot = piv.xs(m, level="nms_method")[LABELS].to_numpy().sum() / none[LABELS].to_numpy().sum()
+            row["pooled_ret_total"] = tot
+            per.append(row)
+    p = pd.DataFrame(per)
+    base = p[p.nms_method == "iou_grid_n1"].set_index("overlap")["pooled_ret_total"]
+    p["further_removed_vs_iou_single_tile"] = 1 - p["pooled_ret_total"] / p["overlap"].map(base)
+    p.to_csv(OUT / "I_class_retention_per_slide.csv", index=False)
+    for m in ("iou_grid_n1", "nn_dist_grid_n1", "nn_center_grid_n1", "nn_cluster_grid_n1"):
+        r = p[(p.nms_method == m) & (p.overlap == 0.0)].iloc[0]
+        log(f"I: per slide @ 0%: {m}: median retention Eos {r.median_ret_Eos:.3f} Lym {r.median_ret_Lym:.3f}, "
+            f"Eos retained more in {r.n_slides_Eos_retained_more}/{r.n_slides}, "
+            f"median log ratio {r.median_log_ret_ratio_Eos_Lym:.3f}")
+    s0 = p[(p.nms_method == "iou_grid_n1") & (p.overlap == 0.0)].iloc[0]
+    log(f"I: per-tile IoU removed {1 - s0.pooled_ret_total:.1%} of all detections at 0% overlap")
+    c25 = p[(p.overlap == 0.25) & p.nms_method.str.match(r"iou_(grid_n[2-5]|global)$")]
+    log(f"I: at 25% overlap, cross-tile IoU removed a further "
+        f"{c25.further_removed_vs_iou_single_tile.min():.1%}-{c25.further_removed_vs_iou_single_tile.max():.1%} "
+        f"of the detections kept by per-tile IoU")
     for r in i.itertuples():
         log(f"I: {r.nms_method} @ {r.overlap:.0%}: retention Mac {r.ret_Mac:.3f} "
             f"Lym {r.ret_Lym:.3f} Neu {r.ret_Neu:.3f} Eos {r.ret_Eos:.3f} "

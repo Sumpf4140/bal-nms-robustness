@@ -123,6 +123,7 @@ controlled single-process timing (`nms timing`).
 | `revision/H_table3_*.csv` | upper-tail frequency and largest-deviation share | Table 3 |
 | `revision/H_no_nms_slide_level.csv` | slide-level sign test of the No-NMS outlier finding | Methods (outlier analysis) |
 | `revision/I_class_retention.csv` | class-specific retention relative to No-NMS | Discussion |
+| `revision/I_class_retention_per_slide.csv` | per-slide retention by cell type, all variants and overlaps | Discussion |
 | `revision/J_friedman_25methods.csv` | Friedman statistics across the 25 variants | Results |
 
 Weights in `weighted_method_means.csv` are the per-slide detection counts (w = N).
