@@ -120,6 +120,7 @@ controlled single-process timing (`nms timing`).
 | `revision/D_zero_replacement_sensitivity.csv` | equivalence under alternative zero replacement | Table S6 |
 | `revision/F_edgecrop_vs_iou.csv` | edge-crop versus matching IoU-only variant | Results (edge crop) |
 | `revision/G_slide_level_distribution.csv` | per-slide distribution of Δ | Results |
+| `revision/G_slide_level_all.csv` | per-slide distribution and slides outside ±0.20, all variants, log-ratios and overlaps | Results, Table S4 |
 | `revision/H_table3_*.csv` | upper-tail frequency and largest-deviation share | Table 3 |
 | `revision/H_no_nms_slide_level.csv` | slide-level sign test of the No-NMS outlier finding | Methods (outlier analysis) |
 | `revision/I_class_retention.csv` | class-specific retention relative to No-NMS | Discussion |

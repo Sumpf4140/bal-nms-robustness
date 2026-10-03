@@ -186,6 +186,23 @@ def analysis_G() -> None:
                          n_gt_010=int((np.abs(d) > 0.10).sum())))
     g = pd.DataFrame(rows)
     g.to_csv(OUT / "G_slide_level_distribution.csv", index=False)
+    # every variant x log-ratio x overlap: per-slide distribution and the number
+    # of slides outside the equivalence margin (|delta| > 0.20)
+    allrows = []
+    for ov in OVERLAP_PCTS:
+        alr_df = alr_table(slide_counts(ov))
+        for m in sorted(set(alr_df.nms_method) - {"none"}):
+            for coord in [f"alr_{EN[l]}" for l in NON_REF]:
+                d = paired_diffs(alr_df, m, "none", coord)
+                allrows.append(dict(nms_method=m, overlap=ov, coord=coord, n=len(d), median=np.median(d),
+                                    q05=np.quantile(d, .05), q95=np.quantile(d, .95),
+                                    n_outside_020=int((np.abs(d) > 0.20).sum())))
+    ga = pd.DataFrame(allrows)
+    ga.to_csv(OUT / "G_slide_level_all.csv", index=False)
+    nn0 = ga[(ga.overlap == 0.0) & (ga.coord == "alr_Eos") & ga.nms_method.str.startswith("nn_")]
+    log(f"G: nn variants, Eos @ 0%: slides outside +/-0.20: {nn0.n_outside_020.min()}-{nn0.n_outside_020.max()} of 76")
+    nn1 = nn0[nn0.nms_method.str.endswith("grid_n1")]
+    log("G: nn single-tile, Eos @ 0%: " + ", ".join(f"{r.nms_method} {r.n_outside_020}/76" for r in nn1.itertuples()))
     for r in g.itertuples():
         log(f"G: {r.comparison} {r.coord} @ {r.overlap:.0%}: median {r.median:+.3f}, "
             f"5-95% [{r.q05:+.3f}, {r.q95:+.3f}], |d|>0.20 in {r.n_gt_020}/{r.n}")
