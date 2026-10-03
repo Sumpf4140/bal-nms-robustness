@@ -63,11 +63,13 @@ python scripts/reproduce_from_slide_counts.py
 ```
 
 This recomputes the equivalence of all 30 variants against No-NMS at all nine
-overlaps (Table 1, Table S4), the Friedman tests (Results) and the cohort proportions
+overlaps (Table 1, Table S4), the number of slides outside the ±0.20 margin (Table S4,
+values in square brackets), the Friedman tests (Results) and the cohort proportions
 of Table S1, and compares them with the published values. Expected output:
 
 ```
 equivalence: 810 comparisons, max |deviation| = 9.71e-17, equivalence decisions identical: True
+slides outside ±0.20: 810 counts, identical to the published values: True
   primary, Makrophage               Δ = -0.065 (90% CI -0.097 to -0.056)  equivalent: True
   primary, NeutrophilerGranulozyt   Δ = +0.063 (90% CI +0.042 to +0.083)  equivalent: True
   primary, EosinophilerGranulozyt   Δ = +0.116 (90% CI +0.095 to +0.139)  equivalent: True
@@ -114,7 +116,7 @@ controlled single-process timing (`nms timing`).
 | `equivalence_all_overlaps.csv` | median Δ and 90% bootstrap CI, 30 variants × 3 log-ratios × 9 overlaps | Table 1, Table S4, Figure 4 |
 | `scale_dependence_curve.csv` | Krippendorff's α with 95% CI and eligible blocks per analysis scale × overlap | Table 2, Figure 3, Tables S2, S5 |
 | `outlier_summary.csv` | Westfall–Young outlier flags and mean upper-tail frequency | Table 3 |
-| `weighted_method_means.csv` | count-weighted mean composition per variant (0% overlap) | Table S1 |
+| `weighted_method_means.csv` | count-weighted mean ilr/alr coordinates per variant (0% overlap; back-transformed = geometric mean composition) | Table S1 |
 | `revision/A_margin_sensitivity_*.csv` | equivalence at margins ±0.10, ±0.15, ±0.20 | Discussion |
 | `revision/B_cells_per_eligible_block.csv` | cells per eligible block after deduplication | Methods (eligibility mask), Table S2 |
 | `revision/C_zero_frequencies.csv` | zero counts by cell type × analysis scale × variant | Table S3 |

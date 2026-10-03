@@ -5,10 +5,14 @@ library functions as the full pipeline,
 
   * the equivalence of every post-processing variant versus No-NMS at every
     tile overlap (Table 1, Table S4)  -> compared with results/equivalence_all_overlaps.csv
+  * the number of slides whose difference lies outside the equivalence margin
+    (Table S4, values in square brackets)
+                                      -> compared with results/revision/G_slide_level_all.csv
   * the Friedman tests across the 25 variants at 0% overlap
                                       -> compared with results/revision/J_friedman_25methods.csv
-  * the cohort proportions used in Table S1 (count-weighted mean composition
-    of the No-NMS differential at 0% overlap)
+  * the cohort proportions used in Table S1 (geometric mean composition of the
+    No-NMS differentials at 0% overlap: count-weighted mean of the ilr
+    coordinates, transformed back to proportions)
 
 and reports the largest absolute deviation from the published values.
 
@@ -61,10 +65,11 @@ def equivalence(counts: pd.DataFrame) -> pd.DataFrame:
             for method in wide.columns:
                 if method == "none":
                     continue
-                res = bootstrap_equivalence((wide[method] - wide["none"]).to_numpy(),
-                                            EQUIV_MARGIN_ALR)
+                diffs = (wide[method] - wide["none"]).to_numpy()
+                res = bootstrap_equivalence(diffs, EQUIV_MARGIN_ALR)
                 rows.append({**res, "nms_method": method, "label": lbl,
-                             "overlap_pct": float(ov)})
+                             "overlap_pct": float(ov),
+                             "n_outside": int((np.abs(diffs) > EQUIV_MARGIN_ALR).sum())})
     return pd.DataFrame(rows)
 
 
@@ -100,6 +105,14 @@ def main() -> None:
     agree = (m["equivalent"] == m["equivalent_pub"]).all()
     print(f"equivalence: {len(m)} comparisons, max |deviation| = {dev:.2e}, "
           f"equivalence decisions identical: {agree}")
+    short = {"Makrophage": "alr_Mac", "NeutrophilerGranulozyt": "alr_Neu",
+             "EosinophilerGranulozyt": "alr_Eos"}
+    pub_g = pd.read_csv(RESULTS_DIR / "revision" / "G_slide_level_all.csv")
+    g = eq.assign(coord=eq.label.map(short), overlap=eq.overlap_pct).merge(
+        pub_g, on=["nms_method", "coord", "overlap"])
+    assert len(g) == len(pub_g) == 810, (len(g), len(pub_g))
+    print(f"slides outside ±{EQUIV_MARGIN_ALR:.2f}: {len(g)} counts, "
+          f"identical to the published values: {(g.n_outside == g.n_outside_020).all()}")
     prim = eq[(eq.nms_method == "iou_grid_n1") & (eq.overlap_pct == 0.0)]
     for r in prim.itertuples():
         print(f"  primary, {r.label:<24} Δ = {r.median:+.3f} "
