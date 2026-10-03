@@ -5,7 +5,8 @@ Read-only against the results DB. Writes CSVs to results/revision/ and prints a
 summary. Labels refer to reviewer (R1/R2) comments; M = major comment.
 
   A  (R1.5)      stricter equivalence margin ±0.10 re-read from existing CIs
-  C  (R2-M10)    zero-count frequencies by analysis scale x variant (eligible blocks)
+  B  (R1.6, R2-M3) cells per eligible block after deduplication (mask: >=500 No-NMS detections)
+  C  (R2-M10)    zero-count frequencies by cell type x analysis scale x variant (eligible blocks)
   D  (R2-M10)    eosinophil equivalence under alternative zero-replacement settings
   F  (R2-M11)    edge-crop vs matching IoU-only variant (isolates edge removal)
   G  (R2-M6)     slide-level distribution of paired alr differences
@@ -13,7 +14,7 @@ summary. Labels refer to reviewer (R1/R2) comments; M = major comment.
   I  (R2-M8)     class-specific retention (method count / No-NMS count) per class
   J  (R2-M4)     Friedman across the 25 variants: statistic, df, exact p, W
 
-Run:  python scripts/revision_analyses.py [A J G F I D H C]   (default: all)
+Run:  python scripts/revision_analyses.py [A B J G F I D H C]   (default: all)
 """
 from __future__ import annotations
 
@@ -421,11 +422,11 @@ def analysis_C() -> None:
                    SUM(CASE WHEN bc.count = 0 THEN 1 ELSE 0 END) AS n_zero
             FROM block_counts bc
             JOIN keep USING (slide_id, overlap_pct, block_size, block_x, block_y)
-            WHERE bc.label IN ('EosinophilerGranulozyt', 'Lymphozyt')
             GROUP BY 1,2,3,4
         """).fetchdf()
     c["frac_zero"] = c.n_zero / c.n_blocks
     c["label"] = c["label"].map(EN)
+    c = c.sort_values(["label", "block_size", "overlap_pct", "nms_method"])
     c.to_csv(OUT / "C_zero_frequencies.csv", index=False)
     eos = c[(c.label == "Eos") & (c.nms_method.isin(["none", "iou_grid_n1",
                                                      "nn_dist_grid_n1"]))]
@@ -433,8 +434,42 @@ def analysis_C() -> None:
         sub = eos[(eos.block_size == bs) & (eos.overlap_pct == 0.0)]
         parts = ", ".join(f"{r.nms_method}={r.frac_zero:.1%}" for r in sub.itertuples())
         log(f"C: eos zero-fraction @ 0% overlap, block_size {bs}: {parts}")
-    lym = c[(c.label == "Lym")]
-    log(f"C: max lymphocyte zero-fraction anywhere: {lym.frac_zero.max():.2%}")
+    for lbl in ("Neu", "Lym", "Mac"):
+        sub = c[c.label == lbl]
+        log(f"C: max {lbl} zero-fraction anywhere: {sub.frac_zero.max():.2%}")
+
+
+# ── B: cells per eligible block after deduplication ───────────────────────────
+def analysis_B() -> None:
+    """The eligibility mask counts No-NMS detections, which include duplicates.
+    Report how many detections each variant keeps in the eligible blocks."""
+    with connect(read_only=True) as con:
+        b = con.execute("""
+            WITH keep AS (
+                SELECT slide_id, overlap_pct, block_size, block_x, block_y
+                FROM block_counts
+                WHERE nms_method='none' AND n_block_total >= 500
+                  AND label='Makrophage'
+            )
+            SELECT bc.block_size, bc.overlap_pct, bc.nms_method,
+                   COUNT(*) AS n_blocks,
+                   quantile_cont(bc.n_block_total, 0.5) AS median_cells,
+                   quantile_cont(bc.n_block_total, 0.05) AS q05_cells,
+                   MIN(bc.n_block_total) AS min_cells
+            FROM block_counts bc
+            JOIN keep USING (slide_id, overlap_pct, block_size, block_x, block_y)
+            WHERE bc.label = 'Makrophage'
+            GROUP BY 1,2,3
+        """).fetchdf()
+    b = b.sort_values(["block_size", "overlap_pct", "nms_method"])
+    b.to_csv(OUT / "B_cells_per_eligible_block.csv", index=False)
+    ref = b[(b.nms_method == "iou_grid_n1") & (b.overlap_pct == 0.0)]
+    log("B: median cells per eligible block, iou_grid_n1 @0%: "
+        + ", ".join(f"{int(r.block_size)}={r.median_cells:.1f}" for r in ref.itertuples()))
+    dd = b[b.nms_method.isin(DEDUP_24) & (b.block_size == 1)]
+    lo = dd.loc[dd.median_cells.idxmin()]
+    log(f"B: lowest 1x1 median over the 24 dedup variants: {lo.median_cells:.1f} "
+        f"({lo.nms_method} @ {lo.overlap_pct:.3f})")
 
 
 # ── sanity: reproduce Table 1 numbers from the existing CSV ───────────────────
@@ -449,10 +484,10 @@ def sanity() -> None:
 
 
 if __name__ == "__main__":
-    which = set(sys.argv[1:]) or {"sanity", "A", "J", "G", "F", "I", "D", "H", "C"}
-    steps = {"sanity": sanity, "A": analysis_A, "J": analysis_J, "G": analysis_G,
-             "F": analysis_F, "I": analysis_I, "D": analysis_D, "H": analysis_H,
-             "C": analysis_C}
+    which = set(sys.argv[1:]) or {"sanity", "A", "B", "J", "G", "F", "I", "D", "H", "C"}
+    steps = {"sanity": sanity, "A": analysis_A, "B": analysis_B, "J": analysis_J,
+             "G": analysis_G, "F": analysis_F, "I": analysis_I, "D": analysis_D,
+             "H": analysis_H, "C": analysis_C}
     for name, fn in steps.items():
         if name in which:
             fn()

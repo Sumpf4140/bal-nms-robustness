@@ -116,7 +116,8 @@ controlled single-process timing (`nms timing`).
 | `outlier_summary.csv` | Westfall–Young outlier flags and mean upper-tail frequency | Table 3 |
 | `weighted_method_means.csv` | count-weighted mean composition per variant (0% overlap) | Table S1 |
 | `revision/A_margin_sensitivity_*.csv` | equivalence at margins ±0.10, ±0.15, ±0.20 | Discussion |
-| `revision/C_zero_frequencies.csv` | zero counts by analysis scale × variant | Table S3 |
+| `revision/B_cells_per_eligible_block.csv` | cells per eligible block after deduplication | Methods (eligibility mask), Table S2 |
+| `revision/C_zero_frequencies.csv` | zero counts by cell type × analysis scale × variant | Table S3 |
 | `revision/D_zero_replacement_sensitivity.csv` | equivalence under alternative zero replacement | Table S6 |
 | `revision/F_edgecrop_vs_iou.csv` | edge-crop versus matching IoU-only variant | Results (edge crop) |
 | `revision/G_slide_level_distribution.csv` | per-slide distribution of Δ | Results |
