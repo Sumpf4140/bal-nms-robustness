@@ -175,3 +175,15 @@ If you use this code or the results, please cite the paper:
   doi     = {[DOI]}
 }
 ```
+
+### Second revision (results/revision2/)
+
+`python scripts/revision2_analyses.py [M K S N]` (needs the results database for K and N)
+
+| File | Content | Manuscript |
+|---|---|---|
+| `revision2/M_slide_percentages.csv`, `M_classification_changes.csv` | whole-slide percentages and changes of the classification at the BAL thresholds (lymphocytes > 15%, neutrophils > 3%, eosinophils > 1%) versus No-NMS | Results, Table S8 |
+| `revision2/KL_slide_counts.csv` | per-slide counts for the threshold and parameter sensitivity analyses (0% tile overlap) | Tables S9, S10 |
+| `revision2/K_confidence_threshold.csv` | equivalence versus No-NMS at confidence thresholds 0.37–0.70 | Table S9 |
+| `revision2/L_parameters.csv` | equivalence versus No-NMS for other IoU thresholds, nn radii and nn-centre multipliers | Table S10 |
+| `revision2/N_classwise_iou*.csv` | IoU suppression applied within each predicted class | Results, Table S10 |
